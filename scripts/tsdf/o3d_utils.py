@@ -14,8 +14,6 @@ def unity_pose_to_open3d_extrinsic(
     else:
         rotation_matrix = np.eye(3)
 
-    rotation_matrix = R.from_quat(quaternion).as_matrix()
-
     T_world_to_cam = np.eye(4)
     T_world_to_cam[:3, :3] = rotation_matrix
     T_world_to_cam[:3, 3] = position
