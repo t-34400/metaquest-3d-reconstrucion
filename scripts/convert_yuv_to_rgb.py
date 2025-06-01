@@ -14,7 +14,7 @@ from utils.image_utils import convert_yuv420_888_to_bgr, is_valid_image, ImageFo
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--project_dir",
+        "--project_dir", "-p",
         type=str,
         required=True,
         help="Path to the project directory containing QRC data."

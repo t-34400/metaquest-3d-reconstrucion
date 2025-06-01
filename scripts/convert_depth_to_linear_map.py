@@ -12,7 +12,7 @@ import constants
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--project_dir",
+        "--project_dir", "-p",
         type=str,
         required=True,
         help="Path to the project directory containing QRC data."
