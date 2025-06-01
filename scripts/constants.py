@@ -15,3 +15,6 @@ RIGHT_CAMERA_RGB_IMAGE_DIR = "right_camera_rgb/"
 
 LEFT_DEPTH_GRAY_IMAGE_DIR = "left_depth_gray/"
 RIGHT_DEPTH_GRAY_IMAGE_DIR = "right_depth_gray/"
+
+no_color_pcd = "no_color_point_cloud.ply"
+colored_pcd = "colored_point_cloud.ply"
