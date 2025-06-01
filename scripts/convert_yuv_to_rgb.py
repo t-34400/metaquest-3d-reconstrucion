@@ -113,7 +113,7 @@ def main(args):
     ]
 
     for params in camera_path_params:
-        print(f"[Info] Converting {params["camera"]} camera images...")
+        print(f"[Info] Converting {params['camera']} camera images...")
 
         params["output_image_dir"].mkdir(parents=True, exist_ok=True)
 
