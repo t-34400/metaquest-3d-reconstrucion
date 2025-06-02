@@ -73,7 +73,9 @@ python scripts/convert_depth_to_linear_map.py \
 
 ```bash
 python scripts/generate_point_cloud.py \
-  --project_dir path/to/your/project
+  --project_dir path/to/your/project \
+  --color \
+  --visualize
 ```
 
 **Required:**
