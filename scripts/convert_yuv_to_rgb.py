@@ -3,6 +3,7 @@ import numpy as np
 from tqdm import tqdm
 import cv2
 from pathlib import Path
+from concurrent.futures import ProcessPoolExecutor, as_completed
 import json
 import argparse
 import os
@@ -20,7 +21,7 @@ def parse_args():
         help="Path to the project directory containing QRC data."
     )
     parser.add_argument(
-        "--filter", action="store_true", default=True,
+        "--filter", action="store_true", default=False,
         help="Enable image quality filtering."
     )
     parser.add_argument(
@@ -61,6 +62,29 @@ def load_image_format_info(fmt_path):
     return ImageFormatInfo(width=width, height=height, planes=planes)
 
 
+def process_file(
+    yuv_file: Path,
+    output_dir: Path,
+    format_info: ImageFormatInfo
+) -> bool:
+    try:
+        raw_data = np.fromfile(yuv_file, dtype=np.uint8)
+        bgr_img = convert_yuv420_888_to_bgr(raw_data, format_info)
+
+        if is_valid_image:
+            if not is_valid_image(bgr_img):
+                return False
+
+        file_name = os.path.splitext(os.path.basename(yuv_file))[0]
+        out_path = output_dir / f"{file_name}.png"
+
+        cv2.imwrite(str(out_path), bgr_img)
+        return True
+
+    except Exception as e:
+        return False
+
+
 def convert_yuv_directory_to_png(
     input_dir: Path,
     output_dir: Path,
@@ -72,24 +96,17 @@ def convert_yuv_directory_to_png(
     excluded_count = 0
     processed_count = 0
 
-    for yuv_file in tqdm(yuv_files, desc="Converting YUV to PNG"):
-        try:
-            raw_data = np.fromfile(yuv_file, dtype=np.uint8)
-            bgr_img = convert_yuv420_888_to_bgr(raw_data, format_info)
-
-            if is_valid_image:
-                if not is_valid_image(bgr_img):
-                    excluded_count += 1
-                    continue
-
-            file_name = os.path.splitext(os.path.basename(yuv_file))[0]
-            out_path = output_dir / f"{file_name}.png"
-
-            cv2.imwrite(str(out_path), bgr_img)
-            processed_count += 1
-
-        except Exception as e:
-            print(e)
+    with ProcessPoolExecutor() as executor:
+        futures = [
+            executor.submit(process_file, yuv_file, output_dir, format_info)
+            for yuv_file in yuv_files
+        ]
+        for future in tqdm(as_completed(futures), total=len(futures), desc="Converting YUV to PNG"):
+            result = future.result
+            if result:
+                processed_count += 1
+            else:
+                excluded_count += 1
 
     print(f"[Info] {processed_count} images written to {output_dir}")
     if is_valid_image:
