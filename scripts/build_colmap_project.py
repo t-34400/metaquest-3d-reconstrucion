@@ -33,7 +33,7 @@ def parse_args():
         "--interval",
         type=int,
         default=5,
-
+        help="Interval for processing images (default: 5)."
     )
     args = parser.parse_args()
 

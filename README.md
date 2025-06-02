@@ -23,7 +23,7 @@ This project converts image and depth data captured on Meta Quest (via a custom 
 * SciPy
 * Pillow
 * OpenCV
-* **PyTorch** (required **only** when using `--color` in `generate_point_cloud.py` to generate colored point clouds)
+* PyTorch
 
 ---
 
@@ -49,7 +49,9 @@ python scripts/convert_yuv_to_rgb.py \
 
 ---
 
-### 2. Convert raw depth to linear depth map
+### 2. Convert raw depth to linear depth map (Optional)
+
+This step is not required for the subsequent processing and can be skipped if not needed.
 
 ```bash
 python scripts/convert_depth_to_linear_map.py \
@@ -68,8 +70,6 @@ python scripts/convert_depth_to_linear_map.py \
 ---
 
 ### 3. Generate 3D point cloud via TSDF (Open3D)
-
-> ⚠️ **Using the `--color` option, you must first convert YUV images to RGB using `convert_yuv_to_rgb.py` and install PyTorch.**
 
 ```bash
 python scripts/generate_point_cloud.py \
@@ -91,6 +91,27 @@ python scripts/generate_point_cloud.py \
 
 ---
 
+### 4. Create a COLMAP Project
+
+Generate a COLMAP-compatible project from your data.
+
+```bash
+python scripts/build_colmap_projet.py \
+  --project_dir path/to/your/project \
+  --output_dir path/to/output/colmap_project
+```
+
+**Required:**
+
+* `--project_dir` (`-p`): Path to the project directory containing QRC data.
+* `--output_dir` (`-o`): Directory to output the COLMAP project files.
+
+**Optional:**
+
+* `--interval`: Interval for processing images (default: 5).
+
+---
+
 ## 📝 License
 
 This project is licensed under the MIT License.
@@ -98,6 +119,13 @@ See the [LICENSE](LICENSE) file for full license text.
 
 ---
 
+## 🧩 Third-Party Code
+This repository includes components from the [COLMAP](https://github.com/colmap/colmap) project,
+originally developed at ETH Zurich and UNC Chapel Hill, and distributed under the 3-clause BSD license.
+See [`scripts/third_party/colmap/COPYING.txt`](./scripts/third_party/colmap/COPYING.txt) for details.
+
+---
+
 ## 📌 TODO
 
-* [ ] Convert to COLMAP-compatible and RGB-D dataset formats
+* [ ] Convert to RGB-D dataset formats
