@@ -29,13 +29,18 @@ def parse_args():
         type=Path,
         required=True,
     )
+    parser.add_argument(
+        "--interval",
+        type=int,
+        default=5,
+
+    )
     args = parser.parse_args()
 
     return args
 
 
-
-def load_cameras_and_images(project_dir: Path, output_dir: Path):
+def load_cameras_and_images(project_dir: Path, output_dir: Path, image_interval: int) -> tuple[dict, dict]:
     def load_camera_characteristics(path: Path) -> dict:
         with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
@@ -81,6 +86,7 @@ def load_cameras_and_images(project_dir: Path, output_dir: Path):
         eye: str,
         camera_id: int,
         image_start_id: int,
+        image_interval: int,
         characteristics_json: Path,
         hmd_pose_csv: Path,
         color_map_dir: Path,
@@ -95,7 +101,7 @@ def load_cameras_and_images(project_dir: Path, output_dir: Path):
         hmd_interpolator = PoseInterpolator(hmd_pose_csv)
 
         image_id = image_start_id
-        for filename in tqdm(os.listdir(color_map_dir), desc=f"Processing {eye} images"):
+        for filename in tqdm(os.listdir(color_map_dir)[::image_interval], desc=f"Processing {eye} images"):
             if not filename.endswith(".png"):
                 continue
             try:
@@ -146,6 +152,7 @@ def load_cameras_and_images(project_dir: Path, output_dir: Path):
             eye=side,
             camera_id=camera_id,
             image_start_id=image_start_id,
+            image_interval=image_interval,
             characteristics_json=characteristics_json,
             hmd_pose_csv=hmd_pose_csv,
             color_map_dir=color_map_dir,
@@ -200,7 +207,7 @@ def main(args):
     model_dir = output_dir / OUTPUT_MODEL_DIR
     model_dir.mkdir(parents=True, exist_ok=True)
 
-    cameras, images = load_cameras_and_images(project_dir, output_dir)
+    cameras, images = load_cameras_and_images(project_dir, output_dir, args.interval)
     points3D = load_point_cloud_as_points3D(project_dir)
 
     write_model(
