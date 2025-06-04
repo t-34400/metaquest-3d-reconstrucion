@@ -101,7 +101,8 @@ def load_cameras_and_images(project_dir: Path, output_dir: Path, image_interval:
         hmd_interpolator = PoseInterpolator(hmd_pose_csv)
 
         image_id = image_start_id
-        for filename in tqdm(os.listdir(color_map_dir)[::image_interval], desc=f"Processing {eye} images"):
+        files = sorted(os.listdir(color_map_dir))
+        for filename in tqdm(files[::image_interval], desc=f"Processing {eye} images"):
             if not filename.endswith(".png"):
                 continue
             try:
