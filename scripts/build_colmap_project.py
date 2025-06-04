@@ -66,7 +66,7 @@ def load_cameras_and_images(project_dir: Path, output_dir: Path, image_interval:
         return np.array(t), R.from_quat(quat).inv()
 
     def convert_unity_pose_to_colmap(position: np.ndarray, rotation: R) -> tuple[np.ndarray, np.ndarray]:
-        rotation *= R.from_quat([0, 1, 0, 0])
+        rotation *= R.from_quat([1, 0, 0, 0])
         rotation = rotation.inv()
 
         tvec = -rotation.as_matrix() @ position
