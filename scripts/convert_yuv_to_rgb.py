@@ -102,7 +102,7 @@ def convert_yuv_directory_to_png(
             for yuv_file in yuv_files
         ]
         for future in tqdm(as_completed(futures), total=len(futures), desc="Converting YUV to PNG"):
-            result = future.result
+            result = future.result()
             if result:
                 processed_count += 1
             else:
