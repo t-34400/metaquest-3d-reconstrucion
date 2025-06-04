@@ -88,6 +88,7 @@ python scripts/generate_point_cloud.py \
 * `--sdf_trunc`: Truncation distance in meters (default: 0.04).
 * `--color`: Generate colored point cloud using RGB images.
 * `--visualize`: Display the reconstructed TSDF volume in an Open3D viewer.
+* `--down_voxel_size`: Apply post-integration voxel downsampling to the resulting point cloud (default: 0.02).
 
 ---
 

@@ -28,6 +28,12 @@ def parse_args():
         help="Truncation distance for the TSDF volume (default: 0.04 m)"
     )
     parser.add_argument(
+        "--down_voxel_size",
+        type=float,
+        default=0.02,
+        help="Voxel size for downsampling. Controls how much to reduce point density (default: 0.02)"
+    )
+    parser.add_argument(
         "--color",
         action='store_true',
         help="Sample volume color from the color dataset"
@@ -149,9 +155,9 @@ def main(args):
             print("[Info] Integrating depth maps into TSDF volume...")
             pcd = integrate_depth_maps(depth_dataset, args.voxel_length, args.sdf_trunc)
             print("[Info] Removing non-finite points...")
-            pcd.remove_non_finite_points()
+            pcd = pcd.remove_non_finite_points()
             print("[Info] Downsampling point cloud using voxel grid...")
-            pcd.voxel_down_sample(voxel_size=0.01)
+            pcd = pcd.voxel_down_sample(voxel_size=args.down_voxel_size)
             print("[Info] Removing statistical outliers...")
             _, ind = pcd.remove_statistical_outlier(nb_neighbors=20, std_ratio=2)
             print(f"[Info] Valid points: {len(ind)} / {len(pcd.points)} ({len(ind) / len(pcd.points) * 100:.2f} %)")
