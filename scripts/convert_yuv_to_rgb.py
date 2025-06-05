@@ -67,22 +67,18 @@ def process_file(
     output_dir: Path,
     format_info: ImageFormatInfo
 ) -> bool:
-    try:
-        raw_data = np.fromfile(yuv_file, dtype=np.uint8)
-        bgr_img = convert_yuv420_888_to_bgr(raw_data, format_info)
+    raw_data = np.fromfile(yuv_file, dtype=np.uint8)
+    bgr_img = convert_yuv420_888_to_bgr(raw_data, format_info)
 
-        if is_valid_image:
-            if not is_valid_image(bgr_img):
-                return False
+    if is_valid_image:
+        if not is_valid_image(bgr_img):
+            return False
 
-        file_name = os.path.splitext(os.path.basename(yuv_file))[0]
-        out_path = output_dir / f"{file_name}.png"
+    file_name = os.path.splitext(os.path.basename(yuv_file))[0]
+    out_path = output_dir / f"{file_name}.png"
 
-        cv2.imwrite(str(out_path), bgr_img)
-        return True
-
-    except Exception as e:
-        return False
+    cv2.imwrite(str(out_path), bgr_img)
+    return True
 
 
 def convert_yuv_directory_to_png(
@@ -95,6 +91,7 @@ def convert_yuv_directory_to_png(
 
     excluded_count = 0
     processed_count = 0
+    exception_count = 0
 
     with ProcessPoolExecutor() as executor:
         futures = [
@@ -102,15 +99,26 @@ def convert_yuv_directory_to_png(
             for yuv_file in yuv_files
         ]
         for future in tqdm(as_completed(futures), total=len(futures), desc="Converting YUV to PNG"):
-            result = future.result()
-            if result:
-                processed_count += 1
-            else:
-                excluded_count += 1
+            try:
+                result = future.result()
+                if result:
+                    processed_count += 1
+                else:
+                    excluded_count += 1
+
+            except Exception as e:
+                print(f"[Exception] Worker failed: {e}")
+                exception_count += 1
+                continue            
+
 
     print(f"[Info] {processed_count} images written to {output_dir}")
+
     if is_valid_image:
         print(f"[Info] {excluded_count} images were excluded by filtering.")
+
+    if exception_count > 0:
+        print(f"[Error] {exception_count} files failed due to exceptions.")
 
 
 def main(args):
