@@ -66,7 +66,8 @@ def load_image_format_info(fmt_path):
 def process_file(
     yuv_file: Path,
     output_dir: Path,
-    format_info: ImageFormatInfo
+    format_info: ImageFormatInfo,
+    is_valid_image: Union[Callable[[np.ndarray], bool], None] = None,
 ) -> bool:
     try:
         raw_data = np.fromfile(yuv_file, dtype=np.uint8)
@@ -100,7 +101,7 @@ def convert_yuv_directory_to_png(
 
     with ProcessPoolExecutor() as executor:
         futures = [
-            executor.submit(process_file, yuv_file, output_dir, format_info)
+            executor.submit(process_file, yuv_file, output_dir, format_info, is_valid_image)
             for yuv_file in yuv_files
         ]
         for future in tqdm(as_completed(futures), total=len(futures), desc="Converting YUV to PNG"):
