@@ -26,6 +26,7 @@ class Transforms:
     p1: Optional[float] = None
     p2: Optional[float] = None
     frames: list[Frame] = field(default_factory=list)
+    ply_file_path: Optional[str] = None
 
     def to_json(self, path: str):
         with open(path, 'w') as f:

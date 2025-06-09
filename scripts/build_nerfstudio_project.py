@@ -1,11 +1,11 @@
 import os
 import shutil
-import numpy as np
-from scipy.spatial.transform import Rotation as R
-from pathlib import Path
 import argparse
 import json
-
+from pathlib import Path
+import numpy as np
+import open3d as o3d
+from scipy.spatial.transform import Rotation as R
 from tqdm import tqdm
 import constants
 from utils.pose_utils import PoseInterpolator, compose_transform
@@ -15,7 +15,8 @@ from nerfstudio.depth_reprojector import DepthReprojector
 
 OUTPUT_TRANSFORMS_JSON = "transforms.json"
 OUTPUT_IMAGE_DIR = "images"
-OUTPUT_DEPTH_DIR = "depths"
+OUTPUT_DEPTH_DIR = "depth"
+OUTPUT_PCD_PLY = "dense_pc.ply"
 
 
 def parse_args():
@@ -61,19 +62,17 @@ def load_frames(project_dir: Path, output_dir: Path, image_interval: int) -> tup
         return np.array(t), rot
 
     def convert_unity_pose_to_transform_matrix(position: np.ndarray, rotation: R) -> tuple[np.ndarray, np.ndarray]:
-        rotation *= R.from_rotvec(np.pi / 2 * np.array([1, 0, 0]))
-        rotation_quat = rotation.as_quat()  # shape (4,)
+        rotation *= R.from_rotvec(-np.pi / 2 * np.array([1, 0, 0]))
+        rot_matrix = rotation.as_matrix()  # shape (3, 3)
 
-        position[1] = position[2]
-        position[2] = position[1]
-        rotation_quat = np.array((
-            -rotation_quat[3],
-            rotation_quat[0],
-            rotation_quat[2],
-            rotation_quat[1],
-        ))
+        position[1], position[2] = position[2], position[1]
+        M = np.array([
+            [1, 0, 0],
+            [0, 0, 1],
+            [0, 1, 0],
+        ])
+        rot_matrix = M @ rot_matrix @ M.T
 
-        rot_matrix = R.from_quat(rotation_quat).as_matrix()  # shape (3, 3)
         transform = np.eye(4, dtype=np.float32)
         transform[:3, :3] = rot_matrix
         transform[:3, 3] = position
@@ -210,6 +209,32 @@ def load_frames(project_dir: Path, output_dir: Path, image_interval: int) -> tup
     return frames
 
 
+def convert_pointcloud_open3d_to_opengl(src_ply_file: str, dst_ply_file: str):
+    print(f"[Info] Loading point cloud from: {src_ply_file}")
+    pcd = o3d.io.read_point_cloud(src_ply_file)
+    print(f"[Info] Number of points: {len(pcd.points)}")
+
+    R = np.array([
+        [1, 0,  0],
+        [0, 0, -1],
+        [0, 1,  0]
+    ])
+
+    print("[Info] Transforming point coordinates...")
+    pcd.points = o3d.utility.Vector3dVector(
+        np.asarray(pcd.points) @ R.T
+    )
+
+    if pcd.has_normals():
+        print("[Info] Normals detected: transforming normals...")
+        pcd.normals = o3d.utility.Vector3dVector(
+            np.asarray(pcd.normals) @ R.T
+        )
+
+    o3d.io.write_point_cloud(dst_ply_file, pcd)
+    print(f"[Info] Saved transformed point cloud to: {dst_ply_file}")
+
+
 def main(args):
     project_dir = args.project_dir
     print(f"[Info] Project path: {project_dir}")
@@ -224,6 +249,15 @@ def main(args):
         output_dir=output_dir,
         image_interval=args.interval
     )
+    
+    ply_file_name = None
+
+    src_ply_file = project_dir / constants.COLORED_PCD
+    if os.path.exists(src_ply_file):
+        dst_ply_file = output_dir / OUTPUT_PCD_PLY
+        convert_pointcloud_open3d_to_opengl(src_ply_file, dst_ply_file)
+
+        ply_file_name = OUTPUT_PCD_PLY
 
     transforms = Transforms(
         camera_model="OPENCV", 
@@ -233,7 +267,8 @@ def main(args):
         k4=0.0,
         p1=0.0,
         p2=0.0,
-        frames=frames
+        frames=frames,
+        ply_file_path=ply_file_name
     )
 
     transforms.to_json(str(transform_json))
