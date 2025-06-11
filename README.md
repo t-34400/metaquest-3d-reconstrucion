@@ -97,7 +97,7 @@ python scripts/generate_point_cloud.py \
 Generate a COLMAP-compatible project from your data.
 
 ```bash
-python scripts/build_colmap_projet.py \
+python scripts/build_colmap_project.py \
   --project_dir path/to/your/project \
   --output_dir path/to/output/colmap_project
 ```
