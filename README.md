@@ -130,5 +130,6 @@ See [`scripts/third_party/colmap/COPYING.txt`](./scripts/third_party/colmap/COPY
 ## 📌 TODO
 
 * [ ] Convert to RGB-D dataset formats
+* [ ] Implement explicit carving to remove residual artifacts by clearing free space along depth rays
 * [ ] Improve pose and point cloud color accuracy using [Color Map Optimization in Open3D](https://www.open3d.org/docs/latest/tutorial/pipelines/color_map_optimization.html)
 * [ ] Add instructions to README.md for generating a Nerfstudio project from processed data
